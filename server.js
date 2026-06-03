@@ -1,26 +1,28 @@
 const express = require('express');
 const cors = require('cors');
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const dealerPricing = {
-    "1": {
-        "product_id": "1",
-        "dealer_name": "Tech Store A",
-        "original_price": 999.99,
-        "dealer_price": 899.99,
-        "discount": "10%",
-        "location": "New York"
+const pricing = {
+    "TechStore A": {
+        "Laptop Pro": 899.99,
+        "Wireless Mouse": 24.99,
+        "Keyboard": 45.99,
+        "Monitor": 299.99
     },
-    "2": {
-        "product_id": "2",
-        "dealer_name": "Gadget Shop B",
-        "original_price": 29.99,
-        "dealer_price": 24.99,
-        "discount": "17%",
-        "location": "Los Angeles"
+    "Gadget Hub": {
+        "Laptop Pro": 920.00,
+        "Keyboard": 42.00,
+        "Monitor": 310.00
+    },
+    "ElectroMart": {
+        "Laptop Pro": 880.00,
+        "Keyboard": 48.00
+    },
+    "Accessory World": {
+        "Wireless Mouse": 22.99,
+        "Monitor": 289.99
     }
 };
 
@@ -28,17 +30,27 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', service: 'dealer-pricing' });
 });
 
-app.get('/dealer-pricing', (req, res) => {
-    res.json(Object.values(dealerPricing));
+// Giá của 1 dealer cho 1 sản phẩm
+app.get('/price/:dealer/:product', (req, res) => {
+    const { dealer, product } = req.params;
+    const price = pricing[dealer]?.[product];
+    if (price !== undefined) {
+        res.json({ message: `${dealer} offers ${product} at $${price}` });
+    } else {
+        res.json({ message: `No pricing found for ${product} at ${dealer}` });
+    }
 });
 
-app.get('/dealer-pricing/:product_id', (req, res) => {
-    const pricing = dealerPricing[req.params.product_id];
-    if (pricing) {
-        res.json(pricing);
-    } else {
-        res.status(404).json({ error: 'Pricing not found' });
+// Giá của tất cả dealer cho 1 sản phẩm
+app.get('/allprice/:product', (req, res) => {
+    const { product } = req.params;
+    const prices = [];
+    for (const [dealer, products] of Object.entries(pricing)) {
+        if (products[product] !== undefined) {
+            prices.push({ key: dealer, value: `$${products[product]}` });
+        }
     }
+    res.json({ prices });
 });
 
 const PORT = process.env.PORT || 3000;
